@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+    --color-principal: #be123c;
+    --color-principal-hover: #9f1239;
+    --color-fondo: #f8fafc;
+    --color-texto: #1e293b;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+}
+
+.sidebar-item.active {
+    background-color: var(--color-principal);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(190, 18, 60, 0.25);
+}
+
+.card-hover {
+    transition: all 0.25s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
