@@ -1,12 +1,30 @@
-// 1. BASE DE DATOS INICIAL EXTRAÍDA DEL EXCEL (luckyshoesunidad4.xlsx)
+
+/* ===========================================
+   LUCKY SHOES - CUADRO DE MANDO INTEGRAL
+   Dashboard Rosa Empolvado
+=========================================== */
+
+// PALETA ORIGINAL - NO MODIFICADA
+const COLORES_LUCKY = {
+    financiera: '#956582',
+    cliente: '#A6788D',
+    procesos: '#C9918A',
+    aprendizaje: '#926A9B',
+    principal: '#A6788D',
+    oscuro: '#382B36',
+    fondoGrafico: '#F0E4E9',
+    borde: '#E8D9D7'
+};
+
+// DATOS INICIALES DEL EXCEL
 const datosIniciales = {
     financiera: {
         id: 'financiera',
         nombre: 'Perspectiva Financiera',
-        color: '#10b981',
+        color: COLORES_LUCKY.financiera,
         bgLight: 'bg-emerald-50',
         textCol: 'text-emerald-700',
-        descripcion: 'Incrementar las ventas mensuales de calzado femenino y aumentar la rentabilidad mediante una mejor gestión de costos.',
+        descripcion: 'Incrementar las ventas y mejorar la rentabilidad mediante una gestión eficiente de costos.',
         indicadores: [
             {
                 id: 'fin_1',
@@ -36,13 +54,14 @@ const datosIniciales = {
             }
         ]
     },
+
     cliente: {
         id: 'cliente',
         nombre: 'Perspectiva del Cliente',
-        color: '#e11d48',
+        color: COLORES_LUCKY.cliente,
         bgLight: 'bg-rose-50',
         textCol: 'text-rose-700',
-        descripcion: 'Incrementar la satisfacción mediante atención personalizada y fidelizar clientes con descuentos especiales.',
+        descripcion: 'Mejorar la satisfacción y fidelización de las clientas mediante atención personalizada.',
         indicadores: [
             {
                 id: 'cli_1',
@@ -55,7 +74,7 @@ const datosIniciales = {
                 fuente: 'Encuestas',
                 responsable: 'Encargado de atención',
                 iniciativa: 'Encuestas de satisfacción',
-                estrategiaDetalle: 'Incrementar la satisfacción de los clientes mediante atención personalizada.'
+                estrategiaDetalle: 'Incrementar la satisfacción mediante una atención personalizada.'
             },
             {
                 id: 'cli_2',
@@ -68,17 +87,18 @@ const datosIniciales = {
                 fuente: 'Registro de clientes',
                 responsable: 'Gerente de ventas',
                 iniciativa: 'Descuentos para clientes frecuentes',
-                estrategiaDetalle: 'Fidelizar a los clientes mediante descuentos y promociones especiales.'
+                estrategiaDetalle: 'Fidelizar a las clientas mediante descuentos y promociones especiales.'
             }
         ]
     },
+
     procesos: {
         id: 'procesos',
         nombre: 'Perspectiva de Procesos Internos',
-        color: '#f59e0b',
+        color: COLORES_LUCKY.procesos,
         bgLight: 'bg-amber-50',
         textCol: 'text-amber-700',
-        descripcion: 'Si garantizamos o mejoramos la calidad de nuestros productos, entonces optimizaremos la gestión de inventarios.',
+        descripcion: 'Optimizar los inventarios y garantizar la calidad del calzado.',
         indicadores: [
             {
                 id: 'pro_1',
@@ -91,7 +111,7 @@ const datosIniciales = {
                 fuente: 'Registro de inventarios',
                 responsable: 'Encargado de almacén',
                 iniciativa: 'Control digital de inventarios',
-                estrategiaDetalle: 'Optimizar el control de inventarios para evitar falta de modelos y tallas.'
+                estrategiaDetalle: 'Optimizar inventarios para evitar la falta de modelos y tallas.'
             },
             {
                 id: 'pro_2',
@@ -108,13 +128,14 @@ const datosIniciales = {
             }
         ]
     },
+
     aprendizaje: {
         id: 'aprendizaje',
         nombre: 'Aprendizaje y Crecimiento',
-        color: '#0284c7',
+        color: COLORES_LUCKY.aprendizaje,
         bgLight: 'bg-sky-50',
         textCol: 'text-sky-700',
-        descripcion: 'Fortalecer habilidades de marketing digital del equipo y promover participación en propuestas de mejora.',
+        descripcion: 'Fortalecer las habilidades de marketing digital y promover la innovación del equipo.',
         indicadores: [
             {
                 id: 'apr_1',
@@ -146,124 +167,330 @@ const datosIniciales = {
     }
 };
 
-// Cargar desde LocalStorage si el usuario ya hizo simulaciones previas
-let bscData = JSON.parse(localStorage.getItem('luckyShoesBSC')) || JSON.parse(JSON.stringify(datosIniciales));
+// ALMACENAMIENTO LOCAL
+function copiarDatos(datos) {
+    return JSON.parse(JSON.stringify(datos));
+}
+
+let bscData;
+
+try {
+    const guardados = JSON.parse(
+        localStorage.getItem('luckyShoesBSC')
+    );
+
+    const valido = guardados &&
+        Object.keys(datosIniciales).every(key =>
+            Array.isArray(guardados[key]?.indicadores) &&
+            guardados[key].indicadores.length === 2
+        );
+
+    bscData = valido
+        ? guardados
+        : copiarDatos(datosIniciales);
+
+} catch (error) {
+    bscData = copiarDatos(datosIniciales);
+}
+
+// MANTENER LOS COLORES ORIGINALES
+function aplicarColores() {
+    Object.keys(datosIniciales).forEach(key => {
+        bscData[key].color = COLORES_LUCKY[key];
+    });
+}
+
+aplicarColores();
+
 let vistaActual = 'general';
 let chartsActivos = [];
 let indicadorEditando = null;
 
+// CALCULAR CUMPLIMIENTO
 function calcularCumplimiento(ind) {
-    return Math.min(Math.round((ind.actual / ind.meta) * 100), 100);
+    if (ind.meta <= 0) return 0;
+
+    return Math.min(
+        Math.max(Math.round(ind.actual / ind.meta * 100), 0),
+        100
+    );
 }
 
 function calcularPromedioPerspectiva(key) {
-    const inds = bscData[key].indicadores;
-    const suma = inds.reduce((acc, item) => acc + calcularCumplimiento(item), 0);
-    return Math.round(suma / inds.length);
+    const indicadores = bscData[key].indicadores;
+
+    const suma = indicadores.reduce(
+        (total, ind) => total + calcularCumplimiento(ind),
+        0
+    );
+
+    return Math.round(suma / indicadores.length);
 }
 
 function destruirGraficas() {
-    chartsActivos.forEach(chart => chart.destroy());
+    chartsActivos.forEach(grafico => grafico.destroy());
     chartsActivos = [];
 }
 
+// NAVEGACIÓN
 function cambiarVista(vista) {
     vistaActual = vista;
-    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
-    document.getElementById(`nav-${vista}`).classList.add('active');
-    
+
+    document.querySelectorAll('.sidebar-item').forEach(
+        item => item.classList.remove('active')
+    );
+
+    const nav = document.getElementById(`nav-${vista}`);
+
+    if (nav) nav.classList.add('active');
+
     destruirGraficas();
+
     if (vista === 'general') {
         renderVistaGeneral();
     } else {
         renderVistaPerspectiva(vista);
     }
-    lucide.createIcons();
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 }
 
-// ==========================================
-// RENDER 1: VISTA PRINCIPAL PARA EL GERENTE
-// ==========================================
-function renderVistaGeneral() {
-    document.getElementById('titulo-vista').innerText = 'Panel Ejecutivo de Gerencia';
-    document.getElementById('subtitulo-vista').innerText = 'Visión Global de Lucky Shoes • Cumplimiento de Expectativas por Perspectiva';
+// TARJETAS DE LAS CUATRO PERSPECTIVAS
+function crearTarjetaResumen(key, porcentaje, icono) {
+    const p = bscData[key];
 
-    const pFin = calcularPromedioPerspectiva('financiera');
-    const pCli = calcularPromedioPerspectiva('cliente');
-    const pPro = calcularPromedioPerspectiva('procesos');
-    const pApr = calcularPromedioPerspectiva('aprendizaje');
-    const globalScore = Math.round((pFin + pCli + pPro + pApr) / 4);
+    return `
+        <div onclick="cambiarVista('${key}')"
+             class="bg-white p-5 rounded-2xl border
+                    border-slate-200 shadow-sm card-hover cursor-pointer">
 
-    const contenedor = document.getElementById('contenedor-principal');
-    contenedor.innerHTML = `
-        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950 text-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="space-y-1 max-w-2xl">
-                <span class="px-2.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-full text-xs font-semibold">
-                    Premisa Causa - Efecto
-                </span>
-                <h3 class="text-lg font-bold pt-1">"Si garantizamos o mejoramos la calidad de nuestros productos, entonces optimizaremos la gestión de inventarios."</h3>
-                <p class="text-sm text-slate-300">Estrategia: Penetración del mercado mediante campañas publicitarias, promociones atractivas y atención personalizada.</p>
-            </div>
-            <div class="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl text-center border border-white/15 shrink-0">
-                <p class="text-xs uppercase tracking-wider text-rose-200 font-semibold">Cumplimiento Global</p>
-                <p class="text-4xl font-extrabold text-white mt-1">${globalScore}%</p>
-                <p class="text-xs text-slate-300 mt-1">Meta Corporativa: 100%</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            ${crearTarjetaResumen('financiera', pFin, 'trending-up')}
-            ${crearTarjetaResumen('cliente', pCli, 'heart-handshake')}
-            ${crearTarjetaResumen('procesos', pPro, 'layers')}
-            ${crearTarjetaResumen('aprendizaje', pApr, 'sparkles')}
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                <div>
-                    <h4 class="font-bold text-slate-800 text-base">Distribución de Avance (Pastel)</h4>
-                    <p class="text-xs text-slate-500 mb-4">Proporción de cumplimiento actual entre áreas</p>
+            <div class="flex justify-between items-start">
+                <div class="p-2.5 rounded-xl ${p.bgLight} ${p.textCol}">
+                    <i data-lucide="${icono}" class="w-5 h-5"></i>
                 </div>
-                <div class="relative h-64 flex items-center justify-center">
+
+                <span class="text-xs font-bold px-3 py-1 rounded-full"
+                      style="background:#F5E9ED;color:#87576E">
+                    ${porcentaje}% de cumplimiento
+                </span>
+            </div>
+
+            <div class="mt-4">
+                <h3 class="font-bold text-slate-800 text-sm">
+                    ${p.nombre}
+                </h3>
+                <p class="text-xs text-slate-500 mt-1">
+                    2 objetivos estratégicos
+                </p>
+            </div>
+
+            <div class="mt-5 bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div class="h-full rounded-full"
+                     style="width:${porcentaje}%;background:${p.color}">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// TABLA GENERAL
+function generarFilasTablaGeneral() {
+    let html = '';
+
+    Object.keys(bscData).forEach(key => {
+        const p = bscData[key];
+
+        p.indicadores.forEach(ind => {
+            const progreso = calcularCumplimiento(ind);
+
+            html += `
+                <tr class="border-b border-slate-100 hover:bg-slate-50">
+                    <td class="py-4 px-5">
+                        <span class="block text-xs font-bold"
+                              style="color:${p.color}">
+                            ${p.nombre}
+                        </span>
+                        <span class="text-sm text-slate-800">
+                            ${ind.objetivo}
+                        </span>
+                    </td>
+
+                    <td class="py-4 px-5 text-sm">
+                        ${ind.nombre}
+                    </td>
+
+                    <td class="py-4 px-5 font-bold">
+                        ${ind.actual}${ind.unidad}
+                    </td>
+
+                    <td class="py-4 px-5 font-bold"
+                        style="color:#956582">
+                        ${ind.meta}${ind.unidad}
+                    </td>
+
+                    <td class="py-4 px-5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-20 bg-slate-200 h-2 rounded-full">
+                                <div class="h-2 rounded-full"
+                                     style="width:${progreso}%;background:${p.color}">
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold">
+                                ${progreso}%
+                            </span>
+                        </div>
+                    </td>
+
+                    <td class="py-4 px-5 text-xs">
+                        ${ind.responsable}
+                    </td>
+
+                    <td class="py-4 px-5">
+                        <button onclick="abrirModal('${key}','${ind.id}')"
+                                class="px-3 py-2 rounded-lg text-xs font-semibold"
+                                style="background:#F5E9ED;color:#87576E">
+                            Simular
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+
+    return html;
+}
+
+// =============================================
+// VISTA GERENCIAL
+// =============================================
+function renderVistaGeneral() {
+
+    document.getElementById('titulo-vista').innerText =
+        'Panel Ejecutivo de Gerencia';
+
+    document.getElementById('subtitulo-vista').innerText =
+        'Seguimiento de indicadores estratégicos';
+
+    const claves = [
+        'financiera',
+        'cliente',
+        'procesos',
+        'aprendizaje'
+    ];
+
+    const promedios = claves.map(
+        key => calcularPromedioPerspectiva(key)
+    );
+
+    const globalScore = Math.round(
+        promedios.reduce((a, b) => a + b, 0) / 4
+    );
+
+    const contenedor = document.getElementById(
+        'contenedor-principal'
+    );
+
+    contenedor.innerHTML = `
+        <!-- RESUMEN EJECUTIVO -->
+        <div class="bg-white rounded-2xl border border-slate-200
+                    px-6 py-5 flex flex-col sm:flex-row
+                    justify-between items-center gap-4">
+
+            <div>
+                <h3 class="text-lg font-bold text-slate-900">
+                    Resumen del desempeño empresarial
+                </h3>
+
+                <p class="text-sm text-slate-500 mt-1">
+                    Seguimiento de las metas estratégicas de Lucky Shoes.
+                </p>
+            </div>
+
+            <div class="text-center px-6 py-3 rounded-xl shrink-0"
+                 style="background:#F5E9ED">
+
+                <p class="text-xs font-semibold"
+                   style="color:#87576E">
+                    Cumplimiento global
+                </p>
+
+                <p class="text-3xl font-bold mt-1"
+                   style="color:#87576E">
+                    ${globalScore}%
+                </p>
+            </div>
+        </div>
+
+        <!-- PERSPECTIVAS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            ${crearTarjetaResumen('financiera', promedios[0], 'trending-up')}
+            ${crearTarjetaResumen('cliente', promedios[1], 'heart-handshake')}
+            ${crearTarjetaResumen('procesos', promedios[2], 'layers')}
+            ${crearTarjetaResumen('aprendizaje', promedios[3], 'sparkles')}
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200">
+                <h4 class="font-bold text-slate-800">
+                    Distribución del cumplimiento
+                </h4>
+
+                <p class="text-xs text-slate-500 mb-4">
+                    Participación relativa de las cuatro perspectivas
+                </p>
+
+                <div class="relative h-64">
                     <canvas id="chartPastelGeneral"></canvas>
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 text-center">
-                    Haz clic en las tarjetas superiores para simular mejoras por área.
-                </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm lg:col-span-2 flex flex-col justify-between">
-                <div>
-                    <h4 class="font-bold text-slate-800 text-base">Brecha de Expectativas: Actual vs. Meta (8 Indicadores)</h4>
-                    <p class="text-xs text-slate-500 mb-4">Nivel de logro porcentual respecto a la meta establecida en el plan</p>
-                </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 lg:col-span-2">
+                <h4 class="font-bold text-slate-800">
+                    Avance de indicadores
+                </h4>
+
+                <p class="text-xs text-slate-500 mb-4">
+                    Cumplimiento respecto a las metas establecidas
+                </p>
+
                 <div class="relative h-64">
                     <canvas id="chartBarrasGeneral"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <div>
-                    <h4 class="font-bold text-slate-800 text-base">Matriz de Control Gerencial y Responsables</h4>
-                    <p class="text-xs text-slate-500">Haz clic en "Simular" en cualquier fila para probar escenarios de mejora</p>
-                </div>
+        <!-- TABLA DE INDICADORES -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+            <div class="p-6 border-b border-slate-100">
+                <h4 class="font-bold text-slate-800">
+                    Control de indicadores
+                </h4>
+
+                <p class="text-xs text-slate-500 mt-1">
+                    Consulta y simula los resultados estratégicos
+                </p>
             </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                            <th class="py-3.5 px-6 font-semibold">Perspectiva / Objetivo</th>
-                            <th class="py-3.5 px-6 font-semibold">Indicador (KPI)</th>
-                            <th class="py-3.5 px-6 font-semibold">Actual</th>
-                            <th class="py-3.5 px-6 font-semibold">Meta</th>
-                            <th class="py-3.5 px-6 font-semibold">Progreso</th>
-                            <th class="py-3.5 px-6 font-semibold">Responsable</th>
-                            <th class="py-3.5 px-6 font-semibold text-right">Acción</th>
+                    <thead class="bg-slate-50 text-xs">
+                        <tr>
+                            <th class="p-4">Perspectiva / Objetivo</th>
+                            <th class="p-4">Indicador</th>
+                            <th class="p-4">Actual</th>
+                            <th class="p-4">Meta</th>
+                            <th class="p-4">Cumplimiento</th>
+                            <th class="p-4">Responsable</th>
+                            <th class="p-4">Acción</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm">
+
+                    <tbody>
                         ${generarFilasTablaGeneral()}
                     </tbody>
                 </table>
@@ -271,55 +498,75 @@ function renderVistaGeneral() {
         </div>
     `;
 
-    const ctxPie = document.getElementById('chartPastelGeneral').getContext('2d');
-    chartsActivos.push(new Chart(ctxPie, {
+    // GRÁFICO DE PASTEL
+    const pastel = document.getElementById(
+        'chartPastelGeneral'
+    ).getContext('2d');
+
+    chartsActivos.push(new Chart(pastel, {
         type: 'pie',
         data: {
-            labels: ['Financiera', 'Cliente', 'Procesos Internos', 'Aprendizaje'],
+            labels: [
+                'Financiera',
+                'Cliente',
+                'Procesos Internos',
+                'Aprendizaje'
+            ],
             datasets: [{
-                data: [pFin, pCli, pPro, pApr],
-                backgroundColor: ['#10b981', '#e11d48', '#f59e0b', '#0284c7'],
-                borderWidth: 2,
-                borderColor: '#ffffff'
+                data: promedios,
+                backgroundColor: [
+                    COLORES_LUCKY.financiera,
+                    COLORES_LUCKY.cliente,
+                    COLORES_LUCKY.procesos,
+                    COLORES_LUCKY.aprendizaje
+                ],
+                borderColor: '#FFFFFF',
+                borderWidth: 2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                legend: {
+                    position: 'bottom'
+                },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => ` ${ctx.label}: ${ctx.raw}% de cumplimiento promedio`
+                        label: ctx =>
+                            `${ctx.label}: ${ctx.raw}% de cumplimiento promedio`
                     }
                 }
             }
         }
     }));
 
-    const todosInds = [
-        ...bscData.financiera.indicadores,
-        ...bscData.cliente.indicadores,
-        ...bscData.procesos.indicadores,
-        ...bscData.aprendizaje.indicadores
-    ];
+    // GRÁFICO GENERAL DE BARRAS
+    const todos = claves.flatMap(
+        key => bscData[key].indicadores
+    );
 
-    const ctxBar = document.getElementById('chartBarrasGeneral').getContext('2d');
-    chartsActivos.push(new Chart(ctxBar, {
+    const barras = document.getElementById(
+        'chartBarrasGeneral'
+    ).getContext('2d');
+
+    chartsActivos.push(new Chart(barras, {
         type: 'bar',
         data: {
-            labels: todosInds.map(i => i.objetivo),
+            labels: todos.map(ind => ind.objetivo),
             datasets: [
                 {
-                    label: '% Logrado Actual',
-                    data: todosInds.map(i => calcularCumplimiento(i)),
-                    backgroundColor: '#e11d48',
+                    label: '% Logrado',
+                    data: todos.map(calcularCumplimiento),
+                    backgroundColor: COLORES_LUCKY.principal,
                     borderRadius: 6
                 },
                 {
-                    label: 'Brecha para Meta (100%)',
-                    data: todosInds.map(i => 100 - calcularCumplimiento(i)),
-                    backgroundColor: '#e2e8f0',
+                    label: 'Brecha para Meta',
+                    data: todos.map(
+                        ind => 100 - calcularCumplimiento(ind)
+                    ),
+                    backgroundColor: COLORES_LUCKY.fondoGrafico,
                     borderRadius: 6
                 }
             ]
@@ -328,218 +575,277 @@ function renderVistaGeneral() {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { stacked: true, grid: { display: false } },
-                y: { stacked: true, max: 100, ticks: { callback: v => v + '%' } }
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true,
+                    max: 100,
+                    ticks: {
+                        callback: value => value + '%'
+                    }
+                }
             },
             plugins: {
-                legend: { position: 'bottom' }
+                legend: {
+                    position: 'bottom'
+                }
             }
         }
     }));
 }
 
-function crearTarjetaResumen(key, porcentaje, icono) {
-    const p = bscData[key];
-    return `
-        <div onclick="cambiarVista('${key}')" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm card-hover cursor-pointer flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-                <div class="p-2.5 rounded-xl ${p.bgLight} ${p.textCol}">
-                    <i data-lucide="${icono}" class="w-5 h-5"></i>
-                </div>
-                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${porcentaje >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                    ${porcentaje}% Logro
-                </span>
-            </div>
-            <div class="mt-4">
-                <h3 class="font-bold text-slate-800 text-sm">${p.nombre}</h3>
-                <p class="text-xs text-slate-500 mt-0.5">${p.indicadores.length} Objetivos estratégicos</p>
-            </div>
-            <div class="mt-4">
-                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all duration-500" style="width: ${porcentaje}%; background-color: ${p.color}"></div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function generarFilasTablaGeneral() {
-    let html = '';
-    Object.keys(bscData).forEach(key => {
-        const persp = bscData[key];
-        persp.indicadores.forEach(ind => {
-            const porc = calcularCumplimiento(ind);
-            html += `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-6">
-                        <span class="text-xs font-bold ${persp.textCol} block">${persp.nombre}</span>
-                        <span class="font-medium text-slate-800">${ind.objetivo}</span>
-                    </td>
-                    <td class="py-3.5 px-6 text-slate-600">${ind.nombre}</td>
-                    <td class="py-3.5 px-6 font-bold text-slate-900">${ind.actual}${ind.unidad}</td>
-                    <td class="py-3.5 px-6 font-semibold text-emerald-600">${ind.meta}${ind.unidad}</td>
-                    <td class="py-3.5 px-6">
-                        <div class="flex items-center gap-2">
-                            <div class="w-20 bg-slate-200 h-2 rounded-full overflow-hidden">
-                                <div class="h-full rounded-full" style="width: ${porc}%; background-color: ${persp.color}"></div>
-                            </div>
-                            <span class="text-xs font-bold text-slate-700">${porc}%</span>
-                        </div>
-                    </td>
-                    <td class="py-3.5 px-6 text-xs text-slate-500">${ind.responsable}</td>
-                    <td class="py-3.5 px-6 text-right">
-                        <button onclick="abrirModal('${key}', '${ind.id}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white rounded-lg text-xs font-semibold transition">
-                            Simular
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-    });
-    return html;
-}
-
-// ==========================================
-// RENDER 2: VISTAS ESPECÍFICAS POR PERSPECTIVA
-// ==========================================
+// =============================================
+// VISTA INDIVIDUAL POR PERSPECTIVA
+// =============================================
 function renderVistaPerspectiva(key) {
-    const persp = bscData[key];
+
+    const p = bscData[key];
     const promedio = calcularPromedioPerspectiva(key);
 
-    document.getElementById('titulo-vista').innerText = persp.nombre;
-    document.getElementById('subtitulo-vista').innerText = persp.descripcion;
+    // CORRECCIÓN: TÍTULO Y SUBTÍTULO CORRECTOS
+    document.getElementById('titulo-vista').innerText =
+        p.nombre;
 
-    const contenedor = document.getElementById('contenedor-principal');
+    document.getElementById('subtitulo-vista').innerText =
+        p.descripcion;
+
+    const contenedor = document.getElementById(
+        'contenedor-principal'
+    );
+
     contenedor.innerHTML = `
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-2xl ${persp.bgLight} ${persp.textCol} flex items-center justify-center font-bold text-2xl">
-                    ${promedio}%
-                </div>
+        <!-- RESUMEN DE PERSPECTIVA -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200">
+
+            <div class="flex justify-between items-center gap-4">
                 <div>
-                    <span class="text-xs font-bold uppercase tracking-wider ${persp.textCol}">Estado de la Perspectiva</span>
-                    <h3 class="text-xl font-bold text-slate-900">Nivel de Cumplimiento Actual</h3>
-                    <p class="text-sm text-slate-500">Ajusta los indicadores abajo para proyectar cómo alcanzar el 100% de la meta.</p>
+                    <p class="text-xs font-bold"
+                       style="color:${p.color}">
+                        RESULTADO DE LA PERSPECTIVA
+                    </p>
+
+                    <h3 class="text-xl font-bold text-slate-900 mt-2">
+                        Cumplimiento actual: ${promedio}%
+                    </h3>
                 </div>
+
+                <button onclick="cambiarVista('general')"
+                        class="px-4 py-2 rounded-xl text-sm font-semibold"
+                        style="background:#F5E9ED;color:#87576E">
+                    Volver a Vista Gerencial
+                </button>
             </div>
-            <button onclick="cambiarVista('general')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Vista Gerencial
-            </button>
         </div>
 
+        <!-- DOS INDICADORES -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            ${persp.indicadores.map((ind, index) => {
-                const faltante = Math.max(0, ind.meta - ind.actual);
-                return `
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between space-y-6">
-                    <div class="flex justify-between items-start border-b border-slate-100 pb-4">
-                        <div>
-                            <span class="px-2.5 py-1 rounded-md text-xs font-bold ${persp.bgLight} ${persp.textCol}">
-                                ${ind.objetivo}
-                            </span>
-                            <h4 class="text-lg font-bold text-slate-900 mt-2">${ind.nombre}</h4>
-                            <p class="text-xs text-slate-500 mt-1">${ind.estrategiaDetalle}</p>
-                        </div>
-                        <button onclick="abrirModal('${key}', '${ind.id}')" class="px-3.5 py-2 bg-slate-900 hover:bg-rose-600 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shrink-0">
-                            <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Mejorar Dato
-                        </button>
-                    </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                        <div class="h-48 relative flex items-center justify-center">
-                            <canvas id="chartInd_${index}"></canvas>
+            ${p.indicadores.map((ind, index) => {
+
+                const faltante = Math.max(
+                    0,
+                    ind.meta - ind.actual
+                );
+
+                return `
+                    <div class="bg-white rounded-2xl border
+                                border-slate-200 p-6 space-y-5">
+
+                        <div class="flex justify-between items-start gap-3">
+                            <div>
+                                <span class="text-xs font-bold"
+                                      style="color:${p.color}">
+                                    ${ind.objetivo}
+                                </span>
+
+                                <h4 class="text-lg font-bold mt-2">
+                                    ${ind.nombre}
+                                </h4>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    ${ind.estrategiaDetalle}
+                                </p>
+                            </div>
+
+                            <button onclick="abrirModal('${key}','${ind.id}')"
+                                    class="px-3 py-2 rounded-lg text-white
+                                           text-xs font-semibold shrink-0"
+                                    style="background:#A6788D">
+                                Mejorar Dato
+                            </button>
                         </div>
-                        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                            <div>
-                                <p class="text-xs text-slate-500">Valor Actual</p>
-                                <p class="text-2xl font-extrabold text-slate-900">${ind.actual}${ind.unidad}</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+
+                            <div class="relative h-48">
+                                <canvas id="chartInd_${index}"></canvas>
                             </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Meta Esperada</p>
-                                <p class="text-lg font-bold text-emerald-600">${ind.meta}${ind.unidad}</p>
-                            </div>
-                            <div class="pt-2 border-t border-slate-200">
-                                <p class="text-xs text-slate-500">Brecha por cubrir:</p>
-                                <p class="text-sm font-bold text-rose-600">
-                                    ${faltante > 0 ? `+${faltante}${ind.unidad} para llegar a la meta` : '¡Meta Alcanzada!'}
+
+                            <div class="p-4 rounded-xl"
+                                 style="background:#FCF6F8">
+
+                                <p class="text-xs text-slate-500">
+                                    Valor actual
+                                </p>
+
+                                <p class="text-2xl font-bold">
+                                    ${ind.actual}${ind.unidad}
+                                </p>
+
+                                <p class="text-xs text-slate-500 mt-3">
+                                    Meta establecida
+                                </p>
+
+                                <p class="text-lg font-bold"
+                                   style="color:#956582">
+                                    ${ind.meta}${ind.unidad}
+                                </p>
+
+                                <p class="text-xs text-slate-500 mt-3">
+                                    Brecha por cubrir
+                                </p>
+
+                                <p class="text-sm font-bold"
+                                   style="color:#A6788D">
+                                    ${faltante > 0
+                                        ? `+${faltante}${ind.unidad}`
+                                        : '¡Meta alcanzada!'}
                                 </p>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 text-xs">
-                        <div class="bg-slate-50 p-3 rounded-lg">
-                            <span class="text-slate-400 block">Iniciativa Clave:</span>
-                            <span class="font-semibold text-slate-800">${ind.iniciativa}</span>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-lg">
-                            <span class="text-slate-400 block">Responsable:</span>
-                            <span class="font-semibold text-slate-800">${ind.responsable}</span>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-lg">
-                            <span class="text-slate-400 block">Frecuencia:</span>
-                            <span class="font-semibold text-slate-800">${ind.frecuencia}</span>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-lg">
-                            <span class="text-slate-400 block">Fuente de Datos:</span>
-                            <span class="font-semibold text-slate-800">${ind.fuente}</span>
+                        <!-- INFORMACIÓN COMPLEMENTARIA -->
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+
+                            <div class="bg-slate-50 p-3 rounded-lg">
+                                <span class="text-slate-500 block">
+                                    Iniciativa
+                                </span>
+                                <strong>${ind.iniciativa}</strong>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-lg">
+                                <span class="text-slate-500 block">
+                                    Responsable
+                                </span>
+                                <strong>${ind.responsable}</strong>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-lg">
+                                <span class="text-slate-500 block">
+                                    Frecuencia
+                                </span>
+                                <strong>${ind.frecuencia}</strong>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-lg">
+                                <span class="text-slate-500 block">
+                                    Fuente
+                                </span>
+                                <strong>${ind.fuente}</strong>
+                            </div>
                         </div>
                     </div>
-                </div>
                 `;
             }).join('')}
         </div>
 
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h4 class="font-bold text-slate-800 text-base mb-1">Comparativa Directa: Situación Actual vs. Meta</h4>
-            <p class="text-xs text-slate-500 mb-4">Visualización en unidades reales de medición</p>
-            <div class="h-64">
+        <!-- COMPARACIÓN -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+
+            <h4 class="font-bold text-slate-800">
+                Comparación: Actual vs. Meta
+            </h4>
+
+            <p class="text-xs text-slate-500 mb-4">
+                Resultados de los indicadores de esta perspectiva
+            </p>
+
+            <div class="relative h-64">
                 <canvas id="chartComparativaPerspectiva"></canvas>
             </div>
         </div>
     `;
 
-    persp.indicadores.forEach((ind, index) => {
-        const logrado = ind.actual;
-        const restante = Math.max(0, ind.meta - ind.actual);
-        const ctx = document.getElementById(`chartInd_${index}`).getContext('2d');
-        chartsActivos.push(new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Actual Logrado', 'Faltante para Meta'],
-                datasets: [{
-                    data: [logrado, restante],
-                    backgroundColor: [persp.color, '#e2e8f0'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
+    // GRÁFICOS CIRCULARES INDIVIDUALES
+    p.indicadores.forEach((ind, index) => {
+
+        const canvas = document.getElementById(
+            `chartInd_${index}`
+        );
+
+        const actualMostrado = Math.min(
+            Math.max(ind.actual, 0),
+            ind.meta
+        );
+
+        const restante = Math.max(
+            0,
+            ind.meta - actualMostrado
+        );
+
+        chartsActivos.push(new Chart(
+            canvas.getContext('2d'),
+            {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Actual logrado',
+                        'Faltante para meta'
+                    ],
+                    datasets: [{
+                        data: [
+                            actualMostrado,
+                            restante
+                        ],
+                        backgroundColor: [
+                            p.color,
+                            COLORES_LUCKY.fondoGrafico
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
                 }
             }
-        }));
+        ));
     });
 
-    const ctxComp = document.getElementById('chartComparativaPerspectiva').getContext('2d');
-    chartsActivos.push(new Chart(ctxComp, {
+    // GRÁFICO COMPARATIVO
+    const comparativa = document.getElementById(
+        'chartComparativaPerspectiva'
+    ).getContext('2d');
+
+    chartsActivos.push(new Chart(comparativa, {
         type: 'bar',
         data: {
-            labels: persp.indicadores.map(i => i.nombre),
+            labels: p.indicadores.map(
+                ind => ind.nombre
+            ),
             datasets: [
                 {
-                    label: 'Valor Actual',
-                    data: persp.indicadores.map(i => i.actual),
-                    backgroundColor: persp.color,
+                    label: 'Valor actual',
+                    data: p.indicadores.map(
+                        ind => ind.actual
+                    ),
+                    backgroundColor: p.color,
                     borderRadius: 6
                 },
                 {
-                    label: 'Meta Establecida',
-                    data: persp.indicadores.map(i => i.meta),
-                    backgroundColor: '#1e293b',
+                    label: 'Meta establecida',
+                    data: p.indicadores.map(
+                        ind => ind.meta
+                    ),
+                    backgroundColor: COLORES_LUCKY.oscuro,
                     borderRadius: 6
                 }
             ]
@@ -548,87 +854,199 @@ function renderVistaPerspectiva(key) {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } }
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     }));
 }
 
-// ==========================================
-// MODAL INTERACTIVO PARA SIMULAR EXPECTATIVAS
-// ==========================================
-function abrirModal(perspKey, indId) {
-    const persp = bscData[perspKey];
-    const ind = persp.indicadores.find(i => i.id === indId);
-    indicadorEditando = { perspKey, indId };
+// =============================================
+// SIMULACIÓN DE INDICADORES
+// =============================================
 
-    const maxSlider = Math.max(ind.meta * 1.2, ind.actual * 1.2);
-    const step = ind.unidad === ' personas' ? 100 : 1;
+function abrirModal(perspKey, indId) {
+
+    const p = bscData[perspKey];
+
+    const ind = p.indicadores.find(
+        item => item.id === indId
+    );
+
+    if (!ind) return;
+
+    indicadorEditando = {
+        perspKey,
+        indId
+    };
+
+    const maximo = Math.max(
+        ind.meta * 1.2,
+        ind.actual * 1.2,
+        1
+    );
+
+    const paso = ind.unidad === ' personas'
+        ? 100
+        : 1;
 
     document.getElementById('modal-contenido').innerHTML = `
-        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <span class="text-xs font-bold ${persp.textCol}">${persp.nombre}</span>
-            <p class="font-bold text-slate-900 text-sm">${ind.nombre}</p>
-            <p class="text-xs text-slate-500 mt-1">Iniciativa: <strong>${ind.iniciativa}</strong></p>
+        <div class="p-4 rounded-xl"
+             style="background:#FCF6F8">
+
+            <p class="text-xs font-bold"
+               style="color:${p.color}">
+                ${p.nombre}
+            </p>
+
+            <h4 class="font-bold text-slate-900 mt-1">
+                ${ind.nombre}
+            </h4>
+
+            <p class="text-xs text-slate-500 mt-1">
+                Iniciativa: ${ind.iniciativa}
+            </p>
         </div>
 
-        <div>
-            <div class="flex justify-between text-sm font-semibold mb-1">
-                <label class="text-slate-700">Nuevo Valor Actual (${ind.unidad.trim()}):</label>
-                <span id="preview-actual" class="text-rose-600 font-bold">${ind.actual}${ind.unidad}</span>
-            </div>
-            <input type="range" id="input-slider-actual" min="0" max="${maxSlider}" step="${step}" value="${ind.actual}"
-                oninput="document.getElementById('input-num-actual').value = this.value; document.getElementById('preview-actual').innerText = this.value + '${ind.unidad}'"
-                class="w-full accent-rose-600 cursor-pointer">
-            <input type="number" id="input-num-actual" value="${ind.actual}" step="${step}"
-                oninput="document.getElementById('input-slider-actual').value = this.value; document.getElementById('preview-actual').innerText = this.value + '${ind.unidad}'"
-                class="mt-2 w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold">
+        <div class="mt-4">
+            <label class="block text-sm font-semibold mb-2">
+                Nuevo valor actual
+            </label>
+
+            <input type="range"
+                   id="input-slider-actual"
+                   min="0"
+                   max="${maximo}"
+                   step="${paso}"
+                   value="${ind.actual}"
+                   class="w-full"
+                   style="accent-color:#A6788D">
+
+            <input type="number"
+                   id="input-num-actual"
+                   min="0"
+                   step="${paso}"
+                   value="${ind.actual}"
+                   class="mt-3 w-full border rounded-xl p-3">
         </div>
 
-        <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Ajustar Meta / Expectativa (${ind.unidad.trim()}):</label>
-            <input type="number" id="input-num-meta" value="${ind.meta}" step="${step}"
-                class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-emerald-700 bg-emerald-50/40">
+        <div class="mt-4">
+            <label class="block text-sm font-semibold mb-2">
+                Ajustar meta
+            </label>
+
+            <input type="number"
+                   id="input-num-meta"
+                   min="0.01"
+                   step="${paso}"
+                   value="${ind.meta}"
+                   class="w-full border rounded-xl p-3">
         </div>
     `;
 
-    const modal = document.getElementById('modal-simulador');
+    const slider = document.getElementById(
+        'input-slider-actual'
+    );
+
+    const numero = document.getElementById(
+        'input-num-actual'
+    );
+
+    slider.addEventListener('input', () => {
+        numero.value = slider.value;
+    });
+
+    numero.addEventListener('input', () => {
+        slider.value = numero.value;
+    });
+
+    const modal = document.getElementById(
+        'modal-simulador'
+    );
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    lucide.createIcons();
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 }
 
 function cerrarModal() {
-    const modal = document.getElementById('modal-simulador');
+
+    const modal = document.getElementById(
+        'modal-simulador'
+    );
+
     modal.classList.add('hidden');
     modal.classList.remove('flex');
+
     indicadorEditando = null;
 }
 
+// GUARDAR CAMBIOS
 function guardarSimulacion() {
+
     if (!indicadorEditando) return;
+
     const { perspKey, indId } = indicadorEditando;
-    const ind = bscData[perspKey].indicadores.find(i => i.id === indId);
 
-    const nuevoActual = parseFloat(document.getElementById('input-num-actual').value);
-    const nuevaMeta = parseFloat(document.getElementById('input-num-meta').value);
+    const ind = bscData[perspKey].indicadores.find(
+        item => item.id === indId
+    );
 
-    if (!isNaN(nuevoActual) && nuevoActual >= 0) ind.actual = nuevoActual;
-    if (!isNaN(nuevaMeta) && nuevaMeta > 0) ind.meta = nuevaMeta;
+    const nuevoActual = parseFloat(
+        document.getElementById('input-num-actual').value
+    );
 
-    localStorage.setItem('luckyShoesBSC', JSON.stringify(bscData));
-    
+    const nuevaMeta = parseFloat(
+        document.getElementById('input-num-meta').value
+    );
+
+    if (
+        !Number.isFinite(nuevoActual) ||
+        !Number.isFinite(nuevaMeta) ||
+        nuevoActual < 0 ||
+        nuevaMeta <= 0
+    ) {
+        alert(
+            'Ingresa valores válidos. La meta debe ser mayor que cero.'
+        );
+        return;
+    }
+
+    ind.actual = nuevoActual;
+    ind.meta = nuevaMeta;
+
+    localStorage.setItem(
+        'luckyShoesBSC',
+        JSON.stringify(bscData)
+    );
+
     cerrarModal();
     cambiarVista(vistaActual);
 }
 
+// RESTAURAR VALORES ORIGINALES
 function resetearDatos() {
-    if (confirm('¿Deseas restaurar los valores originales del Excel de Lucky Shoes?')) {
-        localStorage.removeItem('luckyShoesBSC');
-        bscData = JSON.parse(JSON.stringify(datosIniciales));
-        cambiarVista(vistaActual);
-    }
+
+    const confirmar = confirm(
+        '¿Deseas restaurar los valores originales del Excel de Lucky Shoes?'
+    );
+
+    if (!confirmar) return;
+
+    localStorage.removeItem('luckyShoesBSC');
+
+    bscData = copiarDatos(datosIniciales);
+
+    aplicarColores();
+    cambiarVista(vistaActual);
 }
 
-window.onload = () => {
+// INICIAR DASHBOARD
+window.addEventListener('load', () => {
     cambiarVista('general');
-};
+});

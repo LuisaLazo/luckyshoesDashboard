@@ -1,10 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --color-principal: #be123c;
-    --color-principal-hover: #9f1239;
-    --color-fondo: #f8fafc;
-    --color-texto: #1e293b;
+    --color-principal: #A6788D;
+    --color-principal-hover: #87576E;
+    --color-fondo: #FCF9F8;
+    --color-texto: #382B36;
+    --color-lateral: #382B36;
+    --color-rosa-claro: #F5E9ED;
+    --color-borde: #E8D9D7;
 }
 
 body {
@@ -13,17 +17,359 @@ body {
     color: var(--color-texto);
 }
 
-.sidebar-item.active {
-    background-color: var(--color-principal);
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(190, 18, 60, 0.25);
+/* MENU LATERAL */
+aside {
+    background: #382B36 !important;
+    color: #EEDFE5 !important;
 }
 
+aside .sidebar-item {
+    color: #EEDFE5;
+}
+
+aside .sidebar-item:hover {
+    background: #584451 !important;
+    color: #FFFFFF !important;
+}
+
+.sidebar-item.active {
+    background: #A6788D !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(166, 120, 141, 0.25);
+}
+
+aside .bg-rose-600 {
+    background: #A6788D !important;
+}
+
+aside .bg-slate-800\/70 {
+    background: #4D3B49 !important;
+    border-color: #675361 !important;
+}
+
+/* FONDO PRINCIPAL */
+main {
+    background: #FCF9F8;
+}
+
+header {
+    background: #FFFFFF !important;
+    border-color: #E8D9D7 !important;
+}
+
+/* TARJETAS */
 .card-hover {
     transition: all 0.25s ease;
 }
 
 .card-hover:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 25px -5px rgba(115, 71, 93, 0.13);
+}
+
+.bg-white {
+    background-color: #FFFFFF;
+}
+
+.border-slate-200,
+.border-slate-200\/80 {
+    border-color: #E8D9D7 !important;
+}
+
+.bg-slate-50 {
+    background-color: #FBF6F7 !important;
+}
+
+.bg-slate-100 {
+    background-color: #F5E9ED !important;
+}
+
+.bg-slate-200 {
+    background-color: #E8D9D7 !important;
+}
+
+/* COLORES DE TEXTO */
+.text-slate-900,
+.text-slate-800 {
+    color: #382B36 !important;
+}
+
+.text-slate-700 {
+    color: #584451 !important;
+}
+
+.text-slate-600,
+.text-slate-500 {
+    color: #85727E !important;
+}
+
+/* BOTONES ROSADOS */
+.bg-rose-600 {
+    background-color: #A6788D !important;
+}
+
+.hover\:bg-rose-700:hover,
+.hover\:bg-rose-600:hover {
+    background-color: #87576E !important;
+}
+
+.text-rose-600,
+.text-rose-700,
+.text-rose-800 {
+    color: #87576E !important;
+}
+
+.bg-rose-50 {
+    background-color: #F5E9ED !important;
+}
+
+.bg-rose-100 {
+    background-color: #EEDCE4 !important;
+}
+
+.border-rose-200 {
+    border-color: #E8C6D3 !important;
+}
+
+/* TONOS COMPLEMENTARIOS */
+.bg-emerald-50 {
+    background-color: #F3EAF0 !important;
+}
+
+.bg-amber-50 {
+    background-color: #FFF1ED !important;
+}
+
+.bg-sky-50 {
+    background-color: #F3ECF6 !important;
+}
+
+.text-emerald-600,
+.text-emerald-700,
+.text-emerald-400 {
+    color: #956582 !important;
+}
+
+.text-amber-400,
+.text-amber-700 {
+    color: #B77D76 !important;
+}
+
+.text-sky-400,
+.text-sky-700 {
+    color: #926A9B !important;
+}
+
+/* FONDOS DE ETIQUETAS */
+.bg-emerald-100 {
+    background-color: #F0DDE7 !important;
+}
+
+.bg-amber-100 {
+    background-color: #F9E6E0 !important;
+}
+
+/* BARRA DE PROGRESO */
+.accent-rose-600 {
+    accent-color: #A6788D !important;
+}
+
+/* MODAL */
+#modal-simulador > div {
+    background: #FFFFFF;
+    border: 1px solid #E8D9D7;
+}
+
+#modal-simulador input:focus {
+    outline: none;
+    border-color: #A6788D;
+    box-shadow: 0 0 0 3px rgba(166, 120, 141, 0.15);
+}
+
+/* CABECERA DEL DASHBOARD */
+#contenedor-principal > div:first-child.bg-gradient-to-r {
+    background: linear-gradient(
+        110deg,
+        #382B36 0%,
+        #654958 55%,
+        #A6788D 100%
+    ) !important;
+}
+
+/* PRESERVAR TEXTO BLANCO EN FONDOS OSCUROS */
+aside .text-white,
+#contenedor-principal .bg-gradient-to-r .text-white,
+button.bg-slate-900,
+button.bg-rose-600 {
+    color: #FFFFFF !important;
+}
+
+/* TABLAS */
+table thead {
+    background: #F8EFF2;
+}
+
+table tbody tr:hover {
+    background-color: #FCF7F9;
+}
+
+/* BARRAS DE DESPLAZAMIENTO */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #F8F0F3;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #D2ABB9;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #A6788D;
+}
+
+/* =====================================
+   LUCKY SHOES - LIMPIEZA VISUAL
+===================================== */
+
+/* Contenido principal más compacto */
+#contenedor-principal {
+    max-width: 1440px;
+    padding: 22px 28px;
+    gap: 20px;
+}
+
+/* Encabezado más compacto */
+main > header {
+    padding: 14px 28px;
+}
+
+#titulo-vista {
+    font-size: 22px;
+    letter-spacing: -0.5px;
+}
+
+#subtitulo-vista {
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+/* Menú lateral */
+aside {
+    width: 260px;
+}
+
+/* Banner estratégico menos grande */
+#contenedor-principal > div:first-child {
+    padding: 20px 24px;
+}
+
+/* Tarjetas y gráficos */
+#contenedor-principal .card-hover {
+    box-shadow: 0 2px 8px rgba(56, 43, 54, 0.04);
+}
+
+#contenedor-principal .card-hover:hover {
+    box-shadow: 0 6px 16px rgba(56, 43, 54, 0.10);
+}
+
+/* Bordes más suaves */
+#contenedor-principal .bg-white {
+    border-color: #E8D9D7;
+}
+
+/* Tipografía de tablas */
+#contenedor-principal table {
+    font-size: 13px;
+}
+
+#contenedor-principal th {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+}
+
+/* Espaciado en pantallas pequeñas */
+@media (max-width: 768px) {
+    #contenedor-principal {
+        padding: 16px;
+    }
+
+    main > header {
+        padding: 14px 16px;
+    }
+
+    #titulo-vista {
+        font-size: 19px;
+    }
+}
+
+/* ========================================
+   LUCKY SHOES - TIPOGRAFÍA PROFESIONAL
+======================================== */
+
+/* Textos generales */
+body {
+    color: #382B36;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Títulos */
+#titulo-vista {
+    color: #382B36 !important;
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+}
+
+/* Subtítulo del encabezado */
+#subtitulo-vista {
+    color: #85727E !important;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* Textos secundarios */
+main .text-slate-500,
+main .text-slate-400 {
+    color: #85727E !important;
+}
+
+/* Títulos de tarjetas */
+main .text-slate-900,
+main .text-slate-800 {
+    color: #382B36 !important;
+}
+
+/* Tonos de indicadores */
+main .text-rose-600,
+main .text-rose-700,
+main .text-emerald-600,
+main .text-emerald-700,
+main .text-amber-700,
+main .text-sky-700 {
+    color: #956582 !important;
+}
+
+/* Texto del menú */
+aside .text-slate-500 {
+    color: #BDA8B3 !important;
+}
+
+/* Texto de marca */
+aside .text-rose-400 {
+    color: #E4C1D0 !important;
+}
+
+/* Tarjetas */
+#contenedor-principal .bg-white {
+    border-color: #E8D9D7 !important;
+}
+
+/* Evitar sombras excesivas */
+#contenedor-principal .shadow-sm {
+    box-shadow: 0 2px 6px rgba(56, 43, 54, 0.035);
 }
